@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gremios de transporte: posturas 2022–2026</title>
+<meta name="description" content="Tablero OSINT de posturas documentadas de gremios de transporte y carga de Colombia frente al Gobierno, 2022–2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+:root{
+ --font-anthropic-sans:Overpass,system-ui,sans-serif;
+ --font-anthropic-serif:Overpass,system-ui,sans-serif;
+ --cds-font-size-title:2rem;--cds-font-size-heading:1.3rem;--cds-font-size-body:1rem;--cds-font-size-caption:.84rem;--cds-font-weight-medium:800;
+ --cds-gap-xs:.3rem;--cds-gap-sm:.6rem;--cds-gap-md:1.1rem;--cds-gap-lg:2.4rem;--cds-pad-xs:.32rem;--cds-pad-sm:.65rem;--cds-pad-lg:1.4rem;--cds-radius:5px;--cds-dur-slow:.3s;
+ --asfalto:#2b2f33;--linea:#f2c230;--concreto:#e8ebe7;
+ --color-bg:#e8ebe7;--color-panel:#fafbf8;--color-fg:#1f2326;--color-fg-muted:#5c6468;--color-border-line:#d3d8d3;--color-warn:#a85f00;--color-bad:#c8432b;
+ --cds-border:#cfd4cf;--cds-surface-popover:#fafbf8;--cds-shadow-popover:0 6px 18px rgba(31,35,38,.18);--cds-text-secondary:#5c6468;--cds-text-link:#1f5f8b;
+ --cds-chart-grid:#e1e5e0;--cds-chart-muted:#9aa29f;--cds-chart-reference:#8b9390;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+ --asfalto:#121517;--concreto:#1d2123;
+ --color-bg:#1d2123;--color-panel:#262b2e;--color-fg:#e9ece8;--color-fg-muted:#a6aeab;--color-border-line:#3a4044;--color-warn:#f0a63a;--color-bad:#e8664c;
+ --cds-border:#3a4044;--cds-surface-popover:#2c3134;--cds-shadow-popover:0 6px 18px rgba(0,0,0,.5);--cds-text-secondary:#a6aeab;--cds-text-link:#8cc4ea;
+ --cds-chart-grid:#33393c;--cds-chart-muted:#69716e;--cds-chart-reference:#7d8582;}}
+:root[data-theme="dark"]{--asfalto:#121517;--concreto:#1d2123;--color-bg:#1d2123;--color-panel:#262b2e;--color-fg:#e9ece8;--color-fg-muted:#a6aeab;--color-border-line:#3a4044;--color-warn:#f0a63a;--cds-border:#3a4044;--cds-surface-popover:#2c3134;--cds-text-secondary:#a6aeab;--cds-text-link:#8cc4ea;--cds-chart-grid:#33393c;--cds-chart-muted:#69716e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
+body{padding:0 0 56px;overflow-x:hidden;font-family:Overpass,system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.dash-skeleton{color:transparent;background:var(--cds-chart-grid);border-radius:3px}
+@media (max-width:640px){#tgr th:nth-child(2),#tgr td:nth-child(2){display:none}}
+.foot{max-width:1180px;margin:32px auto 0;padding:0 16px;font-size:.8rem;color:var(--color-fg-muted)}
+.foot a{color:inherit}
+:focus-visible{outline:3px solid var(--linea);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script>
+/* Pequeño reemplazo del entorno de tableros de Claude: carga los JSON locales */
+(function(){
+  const files={evidencias:'data/evidencias.json',gremios:'data/gremios.json',hitos:'data/hitos.json'};
+  const store={};Object.keys(files).forEach(k=>store[k]={status:'loading',data:[]});
+  const subs=[];let params={};
+  const fire=()=>subs.forEach(f=>{try{f()}catch(e){console.error(e)}});
+  try{params=Object.fromEntries(new URLSearchParams(location.search))}catch(e){}
+  const sync=()=>{try{const q=new URLSearchParams();Object.entries(params).forEach(([k,v])=>v&&q.set(k,v));history.replaceState(null,'',q.toString()?'?'+q:location.pathname)}catch(e){}};
+  window.dash={
+    colors:['#c8432b','#e39b22','#2e8c86','#8494a3','#2f8f4e','#5b6cb0'],
+    data:(id)=>store[id]||{status:'error',data:[]},
+    onData:(f)=>{subs.push(f);if(Object.values(store).some(s=>s.status!=='loading'))f()},
+    calc:()=>{},
+    params:()=>params,
+    setParams:(o)=>{Object.entries(o).forEach(([k,v])=>{if(v==null||v==='')delete params[k];else params[k]=v});sync();fire()},
+    resetParams:()=>{params={};sync();fire()}
+  };
+  Object.entries(files).forEach(([k,u])=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{if(k==='evidencias')d.forEach(e=>{e.anio=(e.fecha||'').slice(0,4);e.mes=(e.fecha||'').slice(0,7)});store[k]={status:'ok',data:d};fire()}).catch(()=>{store[k]={status:'error',data:[]};fire()}));
+})();
+</script>
+</head>
+<body>
+<div class="wrap">
+<style>
+.gx{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-size:var(--cds-font-size-body);line-height:1.5}
+.gx h1{font-weight:900;font-size:clamp(2.1rem,6vw,4.2rem);line-height:.98;letter-spacing:-.02em;margin:0;max-width:16ch}
+.gx h2{font-size:var(--cds-font-size-heading);font-weight:800;letter-spacing:-.01em;margin:0 0 .2rem}
+.gx p{max-width:72ch}
+.gx .note{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);margin:.15rem 0 var(--cds-gap-sm)}
+.gx .lede{font-size:1.15rem;margin:1rem 0 0;max-width:60ch}
+.gx .lede b{font-weight:900}
+
+/* Encabezado */
+.gx header{padding:48px 0 8px}
+.gx .road-wrap{margin:0 calc(50% - 50vw);background:var(--asfalto);color:#e9ece8;padding:22px 16px 18px}
+.gx .road-wrap .inner{max-width:1180px;margin:0 auto;padding:0 16px}
+.gx .road-wrap h2{color:#fff}
+.gx .road-wrap .note{color:#b9c0bd}
+.gx .road-wrap .legend{color:#d5dad7}
+.gx #c-time{min-height:260px}
+
+/* Cifras en franja */
+.gx .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:0 24px}
+.gx .kpi{padding:12px 0 14px;border-top:3px solid var(--color-fg)}
+.gx .kpi .v{font-weight:900;font-size:2.2rem;line-height:1;font-variant-numeric:tabular-nums}
+.gx .kpi .l{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);margin-top:.4rem}
+@media (max-width:640px){.gx .kpis{grid-template-columns:1fr 1fr}}
+
+/* Filtros como vía */
+.gx #filtros{position:sticky;top:0;z-index:10;background:var(--asfalto);color:#e9ece8;margin:0 calc(50% - 50vw);padding:12px max(16px,calc(50vw - 574px));border-radius:0;border-bottom:4px dashed var(--linea)}
+.gx #filtros h2{font-size:1rem;color:#fff;display:inline;margin-right:.6rem}
+.gx #filtros .note{display:inline;color:#b9c0bd}
+.gx .filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.gx select,.gx input[type=search]{font:inherit;font-size:.86rem;padding:.38rem .6rem;border:1px solid var(--color-border-line);border-radius:4px;background:var(--color-panel);color:var(--color-fg);max-width:100%}
+.gx #filtros select{background:#3a3f44;color:#f3f4f1;border-color:#4b5156}
+@media (max-width:640px){.gx #filtros{position:static}.gx .filters{display:grid;grid-template-columns:1fr 1fr}.gx .filters select{width:100%}}
+.gx .hitos{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 22px;font-size:.84rem;color:#d5dad7}
+.gx .hitos b{display:inline-block;min-width:1.35rem;text-align:center;background:#f3f4f1;color:#1f2326;border-top:4px solid var(--linea);border-radius:2px;margin-right:6px;font-weight:900;font-size:.8rem}
+.gx button{font:inherit;font-size:.86rem;font-weight:800;padding:.38rem .8rem;border:0;border-radius:4px;background:var(--linea);color:#1f2326;cursor:pointer}
+
+/* Bloques */
+.gx .card{background:var(--color-panel);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);min-width:0}
+.gx section.plain{background:none;padding:0}
+.gx .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:var(--cds-gap-md)}
+.gx .chart{position:relative;min-height:200px}
+.gx .tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:4px;box-shadow:var(--cds-shadow-popover);padding:.35rem .6rem;font-size:var(--cds-font-size-caption);display:none;z-index:20;max-width:260px;color:var(--color-fg)}
+.gx .tip .k{color:var(--cds-text-secondary)}
+.gx .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:var(--cds-gap-sm)}
+.gx .sw{display:inline-block;width:.7rem;height:.7rem;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* Tablas */
+.gx .tbl{max-height:34rem;overflow:auto}
+.gx table{border-collapse:collapse;width:100%;font-size:.88rem}
+.gx th{position:sticky;top:0;background:var(--color-bg);text-align:left;padding:.45rem .4rem;border-bottom:2px solid var(--color-fg);cursor:pointer;white-space:nowrap;font-weight:800}
+.gx th[aria-sort=ascending]::after{content:" ▲";font-size:.7em}
+.gx th[aria-sort=descending]::after{content:" ▼";font-size:.7em}
+.gx td{padding:.45rem .4rem;border-bottom:1px solid var(--color-border-line);vertical-align:top}
+.gx #evidencias th{background:var(--color-panel)}
+.gx #gremios{background:none;padding:0}
+.gx #tgr td:first-child{font-weight:800}
+.gx #tgr tbody tr{cursor:pointer}
+.gx #tgr tbody tr:hover td{background:var(--color-panel)}
+.gx .pill{display:inline-flex;align-items:center;white-space:nowrap}
+
+/* Ficha */
+.gx .ficha{border-left:6px solid var(--linea)}
+.gx .ficha dl{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:.45rem 1.2rem;margin:var(--cds-gap-md) 0 0}
+.gx .ficha dt{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);padding-top:.15rem}
+.gx .ficha dd{margin:0;max-width:72ch}
+.gx #fx-dir{font-weight:600}
+.gx #selg{font-size:1rem;font-weight:800}
+@media (max-width:560px){.gx .ficha dl{grid-template-columns:1fr}.gx .ficha dt{padding-top:.5rem}}
+.gx .srcs{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.7rem;font-size:.88rem}
+.gx .srcs li{padding-left:.8rem;border-left:3px solid var(--color-border-line)}
+.gx a{color:var(--cds-text-link);text-decoration-thickness:1px;text-underline-offset:2px;word-break:break-word}
+
+.gx .badge{display:inline-block;font-size:var(--cds-font-size-caption);padding:.1rem .45rem;border-radius:3px;background:var(--color-bg);color:var(--color-warn);font-weight:600}
+.gx .low{display:flex;flex-wrap:wrap;gap:6px}
+.gx .fail{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);min-height:inherit}
+.gx .method{font-size:.9rem;color:var(--color-fg-muted);line-height:1.6;background:none;padding:0;border-top:1px solid var(--color-border-line);padding-top:1.2rem}
+.gx .method p{margin:0 0 .6rem}
+.gx .method h2{color:var(--color-fg)}
+</style>
+<div class="gx">
+  <header id="top">
+    <h1>¿Qué dijeron los gremios del transporte al Gobierno?</h1>
+    <p class="lede" id="takeaway">Revisamos 50 gremios de carga y transporte de Colombia entre 2022 y 2026. De <b data-source="kpis" data-field="evidencias" data-row="0" class="dash-skeleton">—</b> evidencias documentadas, el <b data-source="kpis" data-field="pct_critica" data-row="0" class="dash-skeleton">—</b> registra críticas a decisiones de gobierno; solo <b data-source="kpis" data-field="respaldos" data-row="0" class="dash-skeleton">—</b> gremios respaldaron de forma explícita a un candidato presidencial.</p>
+  </header>
+
+  <section class="road-wrap" id="linea-tiempo">
+    <div class="inner">
+      <h2>La carretera 2022–2026</h2>
+      <p class="note">Cada bloque es una declaración pública, apilada en el mes en que ocurrió y pintada según su postura. Los mojones marcan el paro camionero de 2024, las elecciones y la posesión de 2026.</p>
+      <div class="legend" id="lg-time"></div>
+      <div class="chart" id="c-time" data-source="evidencias hitos"></div>
+      <ol class="hitos" id="hitos" data-source="hitos"></ol>
+    </div>
+  </section>
+
+  <section id="kpis" class="kpis">
+    <div class="kpi"><div class="v dash-skeleton" data-source="kpis" data-field="gremios" data-row="0">—</div><div class="l">Gremios investigados</div></div>
+    <div class="kpi"><div class="v dash-skeleton" data-source="kpis" data-field="evidencias" data-row="0">—</div><div class="l">Evidencias documentadas</div></div>
+    <div class="kpi"><div class="v dash-skeleton" data-source="kpis" data-field="pct_verificada" data-row="0">—</div><div class="l">Con URL verificada</div></div>
+    <div class="kpi"><div class="v dash-skeleton" data-source="kpis" data-field="pct_sin_evidencia" data-row="0">—</div><div class="l">Gremios sin evidencia</div></div>
+    <div class="kpi"><div class="v dash-skeleton" data-source="kpis" data-field="pct_institucional" data-row="0">—</div><div class="l">Declaraciones institucionales</div></div>
+    <div class="kpi"><div class="v dash-skeleton" data-source="kpis" data-field="respaldos" data-row="0">—</div><div class="l">Respaldos electorales explícitos</div></div>
+  </section>
+  <p class="note">Estas cifras cubren todo el estudio y no cambian con los filtros. Periodo: 7 de agosto de 2022 al 15 de octubre de 2026.</p>
+
+  <section id="filtros" class="card">
+    <h2>Filtrar</h2>
+    <p class="note" id="nfilt" data-source="evidencias">—</p>
+    <div class="filters">
+      <select class="f" data-p="tipo" aria-label="Tipo de gremio" data-source="evidencias"></select>
+      <select class="f" data-p="region" aria-label="Región" data-source="gremios"></select>
+      <select class="f" data-p="tema" aria-label="Tema" data-source="evidencias"></select>
+      <select class="f" data-p="postura" aria-label="Postura" data-source="evidencias"></select>
+      <select class="f" data-p="anio" aria-label="Año" data-source="evidencias"></select>
+      <select class="f" data-p="decl" aria-label="Tipo de declaración" data-source="evidencias"></select>
+      <select class="f" data-p="petro" aria-label="Postura frente al Gobierno Petro" data-source="gremios"></select>
+      <select class="f" data-p="actual" aria-label="Postura frente al gobierno actual" data-source="gremios"></select>
+      <button class="reset" type="button">Quitar filtros</button>
+    </div>
+  </section>
+
+  <section class="card" id="gremios">
+    <h2>¿A favor o en contra?</h2>
+    <p class="note">Se cuentan solo declaraciones con postura (crítica, mixta o de apoyo). En contra: 60 % o más son críticas. A favor: 60 % o más son de apoyo. Dividido: el resto. Participar en una mesa no cuenta como apoyo. Esto refleja declaraciones públicas, no afiliación partidista. Haz clic en un gremio para ver su ficha y sus fuentes.</p>
+    <p class="note" id="ngr" data-source="gremios">—</p>
+    <div class="tbl">
+      <table id="tgr" data-source="gremios" data-row-key="id">
+        <thead><tr>
+          <th data-field="gremio">Gremio</th><th data-field="tipo_gremio">Tipo</th><th data-field="postura_petro">Gobierno Petro</th>
+          <th data-field="postura_actual">Gobierno actual</th><th data-field="n_evidencias">Evidencias</th><th data-field="n_fuentes">Fuentes</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card" id="posturas"><h2>Distribución de posturas</h2><p class="note">Evidencias por postura documentada.</p><div class="chart" id="c-post" data-source="evidencias"></div></div>
+    <div class="card" id="por-tipo"><h2>Posturas por tipo de gremio</h2><p class="note">Proporción de evidencias de cada grupo.</p><div class="legend" id="lg-tipo"></div><div class="chart" id="c-tipo" data-source="evidencias"></div></div>
+  </section>
+
+
+
+  <section class="card" id="mapa-calor">
+    <h2>De qué habló cada gremio</h2>
+    <p class="note">Número de evidencias por tema (una evidencia puede tocar varios temas). Los nombres en color ámbar tienen evidencia baja o nula.</p>
+    <div class="chart" id="c-heat" data-source="evidencias gremios"></div>
+  </section>
+
+  <section class="grid">
+    <div class="card" id="regiones"><h2>Evidencias por departamento</h2><p class="note">Según la región declarada del gremio; "Nacional" agrupa gremios sin región específica.</p><div class="chart" id="c-reg" data-source="evidencias gremios"></div></div>
+    <div class="card" id="baja-evidencia"><h2>Gremios con evidencia baja o nula</h2><p class="note">No confundir "sin datos" con "sin postura".</p><div class="low" id="lowlist" data-source="gremios"></div></div>
+  </section>
+
+  <section class="card ficha" id="ficha">
+    <h2>Ficha del gremio</h2>
+    <select id="selg" aria-label="Gremio" data-source="gremios"></select>
+    <dl>
+      <dt>Nombre</dt><dd id="fx-nombre" data-source="gremios" data-field="nombre">—</dd>
+      <dt>Frente al Gobierno Petro</dt><dd id="fx-petro" data-source="gremios" data-field="postura_petro">—</dd>
+      <dt>Frente al gobierno actual</dt><dd id="fx-actual" data-source="gremios" data-field="postura_actual">—</dd>
+      <dt>Resumen directo</dt><dd id="fx-dir" data-source="gremios" data-field="resumen_directo">—</dd>
+      <dt>Tipo</dt><dd id="fx-tipo" data-source="gremios" data-field="tipo_gremio">—</dd>
+      <dt>Evidencias</dt><dd id="fx-n" data-source="gremios" data-field="n_evidencias">—</dd>
+      <dt>Postura predominante</dt><dd id="fx-pp" data-source="gremios" data-field="postura_predominante">—</dd>
+      <dt>Nivel de evidencia</dt><dd id="fx-nivel" data-source="gremios" data-field="nivel">—</dd>
+      <dt>Resumen</dt><dd id="fx-res" data-source="gremios" data-field="resumen">—</dd>
+      <dt>Frente al Gobierno</dt><dd id="fx-coin" data-source="gremios" data-field="coincidencias">—</dd>
+      <dt>Respaldo partidista</dt><dd id="fx-resp" data-source="gremios" data-field="respaldo">—</dd>
+      <dt>Evolución</dt><dd id="fx-evo" data-source="gremios" data-field="evolucion">—</dd>
+      <dt>Notas de identidad</dt><dd id="fx-notas" data-source="gremios" data-field="notas">—</dd>
+    </dl>
+    <h2 style="margin-top:1.6rem">Fuentes de este gremio</h2>
+    <p class="note">Cada entrada es una declaración. Los enlaces abren la fuente original y la de contraste.</p>
+    <ul class="srcs" id="fx-src" data-source="evidencias"></ul>
+  </section>
+
+  <section class="card" id="evidencias">
+    <h2>Todas las declaraciones</h2>
+    <p class="note">Busca por cualquier palabra. Toca un encabezado para ordenar. El nombre de la fuente abre la página original.</p>
+    <input type="search" id="q" placeholder="Buscar…" aria-label="Buscar evidencias">
+    <div class="tbl">
+      <table id="tev" data-source="evidencias" data-row-key="id">
+        <thead><tr>
+          <th data-field="fecha">Fecha</th><th data-field="gremio">Gremio</th><th data-field="tema">Tema</th>
+          <th data-field="postura">Postura</th><th data-field="tipo">Tipo</th><th data-field="cita">Cita / paráfrasis</th><th data-field="fuente">Fuente</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card method" id="metodologia">
+    <h2>Metodología y limitaciones</h2>
+    <p>Lista base: hoja COMPLETA del archivo de gremios (53 filas; 3 duplicados consolidados). Búsquedas en prensa, sitios institucionales y fuentes oficiales con Exa, por nombre, sigla y temas, investigadas en 10 lotes. Cada evidencia tiene fuente primaria y, cuando existe, fuente de contraste; las citas literales tienen menos de 15 palabras.</p>
+    <p>Postura es la del gremio frente a una decisión concreta; criticar una política no implica oposición partidista y participar en una mesa no implica respaldo electoral. Solo se registran respaldos electorales cuando son explícitos.</p>
+    <p>Postura frente al gobierno: Gobierno Petro = declaraciones hasta el 7-ago-2026 o críticas al gobierno saliente; gobierno actual = declaraciones dirigidas al gobierno de Abelardo de la Espriella (incluye respaldos explícitos a su candidatura). Muchos gremios aún no tienen declaraciones sobre el gobierno actual.</p>
+    <p>Limitaciones: la cobertura de prensa favorece a gremios nacionales; 8 gremios regionales no tienen evidencia pública localizable. No se extrajeron publicaciones de redes sociales (Apify no se usó). La participación en mesas proviene de un comunicado del Ministerio de Transporte y no refleja una postura propia. Algunas identidades (CNT-CP, ASOVOLCOS, ANT) siguen por confirmar.</p>
+  </section>
+  <div class="tip" id="tip"></div>
+</div>
+<script>
+dash.calc('kpis', {
+  title: 'Totales del estudio',
+  description: 'Cuenta gremios, evidencias documentadas y porcentajes sobre todo el estudio.',
+  inputs: ['evidencias', 'gremios'],
+  fn: (evidencias, gremios) => {
+    const doc = evidencias.filter((e) => e.postura !== 'Sin evidencia');
+    const sin = evidencias.filter((e) => e.postura === 'Sin evidencia').length;
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : '0%');
+    const resp = new Set(doc.filter((e) => e.postura === 'Apoyo' && /^Elecciones/.test(e.tema)).map((e) => e.gremio_id)).size;
+    return [{
+      gremios: gremios.length,
+      evidencias: doc.length,
+      pct_verificada: pct(doc.filter((e) => e.verificada === 'Sí').length, doc.length),
+      pct_sin_evidencia: pct(sin, gremios.length),
+      pct_institucional: pct(doc.filter((e) => e.tipo === 'Institucional').length, doc.length),
+      pct_critica: pct(doc.filter((e) => e.postura === 'Crítica').length, doc.length),
+      respaldos: resp,
+    }];
+  },
+});
+</script>
+<script>
+(function () {
+  // Rellena tarjetas y frase principal con los totales (no dependen de los filtros).
+  const calcKpis = (evidencias, gremios) => {
+    const doc = evidencias.filter((e) => e.postura !== 'Sin evidencia');
+    const sin = evidencias.length - doc.length;
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : '0%');
+    return {
+      gremios: gremios.length,
+      evidencias: doc.length,
+      pct_verificada: pct(doc.filter((e) => e.verificada === 'Sí').length, doc.length),
+      pct_sin_evidencia: sin + ' (' + pct(sin, gremios.length) + ')',
+      pct_institucional: pct(doc.filter((e) => e.tipo === 'Institucional').length, doc.length),
+      pct_critica: pct(doc.filter((e) => e.postura === 'Crítica').length, doc.length),
+      respaldos: new Set(doc.filter((e) => e.postura === 'Apoyo' && /^Elecciones/.test(e.tema)).map((e) => e.gremio_id)).size,
+    };
+  };
+  dash.onData(() => {
+    const de = dash.data('evidencias'), dg = dash.data('gremios');
+    if (de.status !== 'ok' || dg.status !== 'ok') return;
+    const k = calcKpis(de.data, dg.data);
+    document.querySelectorAll('[data-source="kpis"][data-field]').forEach((el) => {
+      const v = k[el.dataset.field];
+      if (v === undefined) return;
+      el.textContent = typeof v === 'number' ? v.toLocaleString('es-CO') : v;
+      el.classList.remove('dash-skeleton');
+    });
+  });
+})();
+</script>
+<script>
+(function () {
+  const POST = ['Crítica', 'Mixta', 'Negociación/acuerdo', 'Informativa/neutral', 'Apoyo'];
+  const col = (p) => dash.colors[POST.indexOf(p)] || 'var(--cds-chart-muted)';
+  const root = document.querySelector('.gx');
+  const tip = document.getElementById('tip');
+  const fmt = d3.format(',');
+  const PARAMS = ['tipo', 'region', 'tema', 'postura', 'anio', 'decl', 'petro', 'actual'];
+  const GOV = ['En contra', 'Dividido', 'A favor', 'Sin postura clara', 'Sin evidencia'];
+  const govCol = (v) => ({ 'En contra': col('Crítica'), 'Dividido': col('Mixta'), 'A favor': col('Apoyo'), 'Sin postura clara': col('Informativa/neutral') }[v] || 'var(--cds-chart-muted)');
+  const pill = (v) => { const s = document.createElement('span'); s.className = 'pill'; const w = document.createElement('span'); w.className = 'sw'; w.style.background = govCol(v); s.append(w, document.createTextNode(v || '—')); return s; };
+  const link = (url, text) => { if (!/^https:\/\//.test(url || '')) return document.createTextNode(text || ''); const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = text || url; return a; };
+  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+  window.gxState = window.gxState || { sort: 'fecha', dir: -1, q: '' };
+  const st = window.gxState;
+
+  const showTip = (ev, html) => {
+    const r = root.getBoundingClientRect();
+    tip.replaceChildren(...html);
+    tip.style.display = 'block';
+    let x = ev.clientX - r.left + 12, y = ev.clientY - r.top + 12;
+    const w = tip.offsetWidth;
+    if (x + w > r.width) x = Math.max(0, ev.clientX - r.left - w - 12);
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  };
+  const hideTip = () => { tip.style.display = 'none'; };
+  const line = (k, v, c) => { const d = document.createElement('div'); if (c) { const s = document.createElement('span'); s.className = 'sw'; s.style.background = c; d.append(s); } const a = document.createElement('span'); a.className = 'k'; a.textContent = k; d.append(a, document.createTextNode(v === undefined ? '' : ': ' + v)); return d; };
+  const fail = (el) => { el.replaceChildren(); const d = document.createElement('div'); d.className = 'fail'; d.textContent = 'Failed to load'; el.append(d); };
+  const legend = (el, keys) => { el.replaceChildren(...keys.map((k) => { const s = document.createElement('span'); const w = document.createElement('span'); w.className = 'sw'; w.style.background = col(k); s.append(w, document.createTextNode(k)); return s; })); };
+
+  document.querySelectorAll('.gx select.f').forEach((s) => s.addEventListener('change', () => dash.setParams({ [s.dataset.p]: s.value || null })));
+  document.querySelector('.gx .reset').addEventListener('click', () => dash.resetParams());
+  document.getElementById('q').addEventListener('input', (e) => { st.q = e.target.value.toLowerCase(); drawTable(); });
+  document.querySelectorAll('#tev th').forEach((th) => th.addEventListener('click', () => { const f = th.dataset.field; st.dir = st.sort === f ? -st.dir : 1; st.sort = f; drawTable(); }));
+  document.getElementById('selg').addEventListener('change', (e) => { st.g = e.target.value; drawFicha(); });
+
+  document.querySelectorAll('#tgr th').forEach((th) => th.addEventListener('click', () => { const f = th.dataset.field; st.gdir = st.gsort === f ? -(st.gdir || 1) : 1; st.gsort = f; drawGremios(); }));
+  document.querySelector('#tgr tbody').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-key]'); if (!tr) return; st.g = tr.dataset.key; drawFicha(); document.getElementById('ficha').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+
+  let E = [], G = [], H = [], deps = new Map(), filtered = [], gmap = new Map(), gfilt = [];
+
+  const fillSel = (p, label, opts) => {
+    const s = document.querySelector(`select.f[data-p="${p}"]`);
+    s.replaceChildren(new Option(label, ''), ...opts.map((o) => new Option(o, o)));
+    s.value = dash.params()[p] ?? '';
+  };
+
+  function applyFilters() {
+    const p = dash.params();
+    filtered = E.filter((e) => e.postura !== 'Sin evidencia'
+      && (!p.tipo || e.tipo_gremio === p.tipo)
+      && (!p.region || (deps.get(e.gremio_id) || []).includes(p.region))
+      && (!p.tema || e.temas.split('; ').includes(p.tema))
+      && (!p.postura || e.postura === p.postura)
+      && (!p.anio || e.anio === p.anio)
+      && (!p.decl || e.tipo === p.decl)
+      && (!p.petro || (gmap.get(e.gremio_id) || {}).postura_petro === p.petro)
+      && (!p.actual || (gmap.get(e.gremio_id) || {}).postura_actual === p.actual));
+    // Gremios: filtros propios del gremio; si hay filtros de evidencia, solo los que tienen evidencias que cumplen
+    const evF = ['tema', 'postura', 'anio', 'decl'].some((k) => p[k]);
+    const conEv = new Set(filtered.map((e) => e.gremio_id));
+    gfilt = G.filter((g) => (!p.tipo || g.tipo_gremio === p.tipo)
+      && (!p.region || g.departamentos.split(', ').includes(p.region))
+      && (!p.petro || g.postura_petro === p.petro)
+      && (!p.actual || g.postura_actual === p.actual)
+      && (!evF || conEv.has(g.id)));
+  }
+
+  function drawGremios() {
+    const tb = document.querySelector('#tgr tbody');
+    const s = st.gsort || 'gremio', d = st.gdir || 1;
+    const rows = gfilt.slice().sort((a, b) => (typeof a[s] === 'number' ? d * (a[s] - b[s]) : d * String(a[s]).localeCompare(String(b[s]), 'es')));
+    document.querySelectorAll('#tgr th').forEach((th) => th.setAttribute('aria-sort', th.dataset.field === s ? (d > 0 ? 'ascending' : 'descending') : 'none'));
+    tb.replaceChildren(...rows.map((g) => {
+      const tr = document.createElement('tr'); tr.dataset.key = g.id; tr.title = g.resumen_directo || '';
+      const td = (c) => { const x = document.createElement('td'); x.append(c); return x; };
+      tr.append(td(g.gremio), td(g.tipo_gremio), td(pill(g.postura_petro)), td(pill(g.postura_actual)), td(String(g.n_evidencias)), td(String(g.n_fuentes)));
+      return tr;
+    }));
+    const c = d3.rollup(gfilt, (v) => v.length, (g) => g.postura_petro);
+    const ca = d3.rollup(gfilt, (v) => v.length, (g) => g.postura_actual);
+    const txt = (m) => GOV.filter((k) => m.get(k)).map((k) => `${m.get(k)} ${k.toLowerCase()}`).join(', ');
+    document.getElementById('ngr').textContent = `${fmt(gfilt.length)} de ${fmt(G.length)} gremios. Gobierno Petro: ${txt(c) || '—'}. Gobierno actual: ${txt(ca) || '—'}.`;
+  }
+
+  function drawPost() {
+    const el = document.getElementById('c-post');
+    const counts = POST.map((k) => ({ k, n: filtered.filter((e) => e.postura === k).length }));
+    const W = el.clientWidth || 320, bh = 26, gap = 10, H0 = counts.length * (bh + gap) + 10;
+    el.replaceChildren(); el.style.minHeight = H0 + 'px';
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H0}`);
+    const lab = svg.append('g');
+    let lw = 0; counts.forEach((c) => { const t = lab.append('text').attr('font-size', 12).text(c.k); lw = Math.max(lw, t.node().getComputedTextLength()); }); lab.remove();
+    const x = d3.scaleLinear([0, d3.max(counts, (c) => c.n) || 1], [0, Math.max(40, W - lw - 60)]);
+    const g = svg.selectAll('g').data(counts).join('g').attr('transform', (d, i) => `translate(0,${i * (bh + gap) + 4})`);
+    g.append('text').attr('x', 0).attr('y', bh / 2 + 4).attr('font-size', 12).attr('fill', 'var(--color-fg)').text((d) => d.k);
+    g.append('rect').attr('x', lw + 8).attr('height', bh).attr('rx', 4).attr('width', (d) => Math.max(0, x(d.n))).attr('fill', (d) => col(d.k))
+      .on('mousemove', (ev, d) => showTip(ev, [line(d.k, fmt(d.n) + ' evidencias')])).on('mouseleave', hideTip);
+    g.append('text').attr('x', (d) => lw + 14 + x(d.n)).attr('y', bh / 2 + 4).attr('font-size', 12).attr('fill', 'var(--color-fg-muted)').style('font-variant-numeric', 'tabular-nums').text((d) => fmt(d.n));
+  }
+
+  function drawTipo() {
+    const el = document.getElementById('c-tipo');
+    legend(document.getElementById('lg-tipo'), POST);
+    const tipos = [...new Set(E.map((e) => e.tipo_gremio))].sort();
+    const rows = tipos.map((t) => { const sub = filtered.filter((e) => e.tipo_gremio === t); const o = { t, n: sub.length }; POST.forEach((k) => (o[k] = sub.filter((e) => e.postura === k).length)); return o; });
+    const W = el.clientWidth || 320, bh = 22, gap = 34, H0 = rows.length * (bh + gap) + 6;
+    el.replaceChildren(); el.style.minHeight = H0 + 'px';
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H0}`);
+    const x = d3.scaleLinear([0, 1], [0, W - 4]);
+    rows.forEach((r, i) => {
+      const y = i * (bh + gap);
+      svg.append('text').attr('x', 0).attr('y', y + 13).attr('font-size', 12).attr('fill', 'var(--color-fg)').text(`${r.t} (${fmt(r.n)})`);
+      let acc = 0;
+      POST.forEach((k) => {
+        const share = r.n ? r[k] / r.n : 0;
+        if (share > 0) svg.append('rect').attr('x', x(acc)).attr('y', y + 18).attr('height', bh).attr('width', Math.max(0, x(share) - 1)).attr('fill', col(k))
+          .on('mousemove', (ev) => showTip(ev, [line(r.t), line(k, `${fmt(r[k])} (${d3.format('.0%')(share)})`, col(k))])).on('mouseleave', hideTip);
+        acc += share;
+      });
+      if (!r.n) svg.append('rect').attr('x', 0).attr('y', y + 18).attr('height', bh).attr('width', W - 4).attr('fill', 'var(--cds-chart-grid)');
+    });
+  }
+
+  function drawTime() {
+    const el = document.getElementById('c-time');
+    legend(document.getElementById('lg-time'), POST);
+    const months = d3.utcMonths(new Date(Date.UTC(2022, 7, 1)), new Date(Date.UTC(2026, 10, 1)));
+    const key = d3.utcFormat('%Y-%m');
+    const byM = d3.group(filtered, (e) => e.mes);
+    const W = el.clientWidth || 600;
+    const x = d3.scaleBand(months.map(key), [0, W]).paddingInner(0.12);
+    const bw = x.bandwidth();
+    const maxN = d3.max(months, (m) => (byM.get(key(m)) || []).length) || 1;
+    const box = Math.max(3, Math.min(bw, 200 / maxN));
+    const stackH = maxN * box + 4, roadY = Math.max(90, stackH + 10), roadH = 34, H0 = roadY + roadH + 72;
+    el.replaceChildren(); el.style.minHeight = H0 + 'px';
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H0}`).attr('role', 'img')
+      .attr('aria-label', 'Declaraciones por mes apiladas sobre una carretera, de agosto de 2022 a octubre de 2026');
+    // calzada
+    svg.append('rect').attr('x', 0).attr('y', roadY).attr('width', W).attr('height', roadH).attr('fill', '#3d4247');
+    svg.append('line').attr('x1', 0).attr('x2', W).attr('y1', roadY + 1).attr('y2', roadY + 1).attr('stroke', '#e9ece8').attr('stroke-width', 2);
+    svg.append('line').attr('x1', 0).attr('x2', W).attr('y1', roadY + roadH - 1).attr('y2', roadY + roadH - 1).attr('stroke', '#e9ece8').attr('stroke-width', 2);
+    svg.append('line').attr('x1', 0).attr('x2', W).attr('y1', roadY + roadH / 2).attr('y2', roadY + roadH / 2).attr('stroke', 'var(--linea)').attr('stroke-width', 3).attr('stroke-dasharray', '14 10');
+    // años sobre la calzada
+    months.filter((m) => m.getUTCMonth() === 0).forEach((m) => {
+      svg.append('text').attr('x', x(key(m)) + 2).attr('y', roadY + roadH / 2 - 6).attr('font-size', 11).attr('font-weight', 800).attr('fill', '#e9ece8').text(m.getUTCFullYear());
+    });
+    // carga apilada
+    const order = (e) => POST.indexOf(e.postura);
+    months.forEach((m) => {
+      const k = key(m), evs = (byM.get(k) || []).slice().sort((a, b) => order(a) - order(b));
+      evs.forEach((e, i) => {
+        svg.append('rect').attr('x', x(k) + (bw - Math.min(bw, box)) / 2).attr('y', roadY - 3 - (i + 1) * box).attr('width', Math.max(2, Math.min(bw, box) - 1)).attr('height', Math.max(2, box - 1))
+          .attr('fill', col(e.postura)).attr('rx', 1)
+          .on('mousemove', (ev) => showTip(ev, [line(e.gremio), line(e.fecha + ', ' + e.postura.toLowerCase(), undefined, col(e.postura)), line(e.tema)])).on('mouseleave', hideTip);
+      });
+    });
+    // mojones numerados (secuencia cronológica)
+    const ol = document.getElementById('hitos');
+    ol.replaceChildren(...H.map((h, i) => { const li = document.createElement('li'); const b = document.createElement('b'); b.textContent = i + 1; li.append(b, `${h.hito} (${d3.utcFormat('%d-%m-%Y')(new Date(h.fecha + 'T00:00:00Z'))})`); return li; }));
+    let lastX = -999, row = 0;
+    const stems = svg.append('g'), plates = svg.append('g');
+    H.forEach((h, i) => {
+      const k = h.fecha.slice(0, 7); if (x(k) === undefined) return;
+      const hx = x(k) + bw / 2;
+      row = hx - lastX < 26 ? row + 1 : 0; lastX = hx;
+      const y0 = roadY + roadH + 3, len = 8 + row * 20, pw = 18, ph = 18;
+      stems.append('rect').attr('x', hx - 1.5).attr('y', y0).attr('width', 3).attr('height', len).attr('fill', '#f3f4f1');
+      const gx0 = Math.min(Math.max(0, hx - pw / 2), W - pw);
+      plates.append('rect').attr('x', gx0).attr('y', y0 + len).attr('width', pw).attr('height', ph).attr('rx', 2).attr('fill', '#f3f4f1');
+      plates.append('rect').attr('x', gx0).attr('y', y0 + len).attr('width', pw).attr('height', 4).attr('fill', 'var(--linea)');
+      plates.append('text').attr('x', gx0 + pw / 2).attr('y', y0 + len + 15).attr('text-anchor', 'middle').attr('font-size', 11).attr('font-weight', 900).attr('fill', '#1f2326').text(i + 1)
+        .append('title').text(h.hito);
+    });
+    if (!filtered.length) svg.append('text').attr('x', 0).attr('y', 20).attr('fill', '#d5dad7').attr('font-size', 13).text('Ninguna declaración cumple los filtros.');
+  }
+
+  function drawHeat() {
+    const el = document.getElementById('c-heat');
+    const temas = [...new Set(E.flatMap((e) => e.temas.split('; ')))].sort((a, b) => a.localeCompare(b, 'es'));
+    const byG = d3.group(filtered, (e) => e.gremio_id);
+    const gs = G.filter((g) => byG.has(g.id) || (['Bajo', 'Nulo'].some((n) => g.nivel.startsWith(n)) && !Object.values(dash.params()).some((v) => v)))
+      .map((g) => ({ g, n: (byG.get(g.id) || []).length })).sort((a, b) => b.n - a.n);
+    const cell = 22, W = el.clientWidth || 600;
+    const probe = d3.select(el).append('svg'); let lw = 0;
+    gs.forEach((r) => { const t = probe.append('text').attr('font-size', 11).text(r.g.gremio + ' ●'); lw = Math.max(lw, t.node().getComputedTextLength()); });
+    probe.remove();
+    const cw = Math.max(14, Math.min(48, (W - lw - 12) / temas.length));
+    const top = 110, H0 = top + gs.length * cell + 4;
+    el.replaceChildren(); el.style.minHeight = Math.max(80, H0) + 'px';
+    if (!gs.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'Ningún gremio cumple los filtros.'; el.append(p); return; }
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${Math.max(W, lw + 12 + cw * temas.length)} ${H0}`);
+    temas.forEach((t, j) => svg.append('text').attr('transform', `translate(${lw + 12 + j * cw + cw / 2},${top - 6}) rotate(-55)`).attr('font-size', 10).attr('fill', 'var(--color-fg-muted)').text(t));
+    const mx = d3.max(gs, (r) => d3.max(temas, (t) => (byG.get(r.g.id) || []).filter((e) => e.temas.split('; ').includes(t)).length)) || 1;
+    gs.forEach((r, i) => {
+      const y = top + i * cell, low = ['Bajo', 'Nulo'].some((n) => r.g.nivel.startsWith(n));
+      const t = svg.append('text').attr('x', 0).attr('y', y + cell / 2 + 4).attr('font-size', 11).attr('fill', low ? 'var(--color-warn)' : 'var(--color-fg)').text(r.g.gremio + (low ? ' ●' : ''));
+      temas.forEach((tm, j) => {
+        const n = (byG.get(r.g.id) || []).filter((e) => e.temas.split('; ').includes(tm)).length;
+        svg.append('rect').attr('x', lw + 12 + j * cw + 1).attr('y', y + 1).attr('width', cw - 2).attr('height', cell - 2).attr('rx', 3)
+          .attr('fill', n ? '#3b6e8f' : 'var(--cds-chart-grid)').attr('fill-opacity', n ? 0.2 + 0.8 * (n / mx) : 0.5)
+          .on('mousemove', (ev) => showTip(ev, [line(r.g.gremio), line(tm, fmt(n))])).on('mouseleave', hideTip);
+      });
+    });
+  }
+
+  function drawReg() {
+    const el = document.getElementById('c-reg');
+    const c = new Map();
+    filtered.forEach((e) => (deps.get(e.gremio_id) || ['Nacional']).forEach((d) => c.set(d, (c.get(d) || 0) + 1)));
+    const rows = [...c].map(([k, n]) => ({ k, n })).sort((a, b) => b.n - a.n);
+    const bh = 18, gap = 8, W = el.clientWidth || 320, H0 = Math.max(60, rows.length * (bh + gap) + 6);
+    el.replaceChildren(); el.style.minHeight = H0 + 'px';
+    if (!rows.length) return;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H0}`);
+    let lw = 0; rows.forEach((r) => { const t = svg.append('text').attr('font-size', 11).text(r.k); lw = Math.max(lw, t.node().getComputedTextLength()); t.remove(); });
+    const x = d3.scaleLinear([0, d3.max(rows, (r) => r.n)], [0, Math.max(30, W - lw - 50)]);
+    rows.forEach((r, i) => {
+      const y = i * (bh + gap);
+      svg.append('text').attr('x', 0).attr('y', y + 13).attr('font-size', 11).attr('fill', 'var(--color-fg)').text(r.k);
+      svg.append('rect').attr('x', lw + 8).attr('y', y).attr('height', bh).attr('rx', 4).attr('width', x(r.n)).attr('fill', r.k === 'Nacional' ? 'var(--cds-chart-muted)' : '#3b6e8f')
+        .on('mousemove', (ev) => showTip(ev, [line(r.k, fmt(r.n) + ' evidencias')])).on('mouseleave', hideTip);
+      svg.append('text').attr('x', lw + 14 + x(r.n)).attr('y', y + 13).attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text(fmt(r.n));
+    });
+  }
+
+  function drawLow() {
+    const el = document.getElementById('lowlist');
+    el.replaceChildren(...G.filter((g) => ['Bajo', 'Nulo'].some((n) => g.nivel.startsWith(n))).map((g) => {
+      const s = document.createElement('span'); s.className = 'badge'; s.textContent = `${g.gremio} (${g.nivel.toLowerCase()})`; return s;
+    }));
+  }
+
+  function drawFicha() {
+    const sel = document.getElementById('selg');
+    if (!sel.options.length) sel.replaceChildren(...G.map((g) => new Option(g.gremio, g.id)));
+    const id = st.g || (G.find((g) => g.sigla === 'ACC') || G[0]).id; sel.value = id;
+    const g = G.find((x) => x.id === id); if (!g) return;
+    const set = (elId, f, v) => { const el = document.getElementById(elId); el.setAttribute('data-where', 'id=' + encodeURIComponent(id)); el.textContent = v ?? g[f]; };
+    set('fx-nombre', 'nombre'); set('fx-tipo', 'tipo_gremio'); set('fx-n', 'n_evidencias', String(g.n_evidencias)); set('fx-pp', 'postura_predominante');
+    set('fx-nivel', 'nivel'); set('fx-res', 'resumen'); set('fx-coin', 'coincidencias'); set('fx-resp', 'respaldo'); set('fx-evo', 'evolucion'); set('fx-notas', 'notas');
+    set('fx-dir', 'resumen_directo');
+    ['petro', 'actual'].forEach((k) => { const el = document.getElementById('fx-' + k); el.setAttribute('data-where', 'id=' + encodeURIComponent(id)); el.replaceChildren(pill(g['postura_' + k])); });
+    const ul = document.getElementById('fx-src');
+    const evs = E.filter((e) => e.gremio_id === id && e.postura !== 'Sin evidencia').sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    if (!evs.length) { const li = document.createElement('li'); li.textContent = 'Sin evidencia pública localizada.'; ul.replaceChildren(li); return; }
+    ul.replaceChildren(...evs.map((e) => {
+      const li = document.createElement('li'); li.dataset.key = e.id;
+      const head = document.createElement('div');
+      const sw = document.createElement('span'); sw.className = 'sw'; sw.style.background = col(e.postura);
+      head.append(sw, document.createTextNode(`${e.fecha || 'sin fecha'}, ${e.postura.toLowerCase()}: ${e.tema}`));
+      const c = document.createElement('div'); c.style.color = 'var(--color-fg-muted)'; c.textContent = e.cita;
+      const l = document.createElement('div');
+      l.append('Fuente: ', link(e.url, `${e.fuente} (${host(e.url)})`));
+      if (/^https:\/\//.test(e.url_contraste || '')) l.append('. Contraste: ', link(e.url_contraste, `${e.contraste || 'fuente'} (${host(e.url_contraste)})`));
+      li.append(head, c, l); return li;
+    }));
+  }
+
+  function drawTable() {
+    const tb = document.querySelector('#tev tbody');
+    let rows = filtered.filter((e) => !st.q || Object.values(e).join(' ').toLowerCase().includes(st.q));
+    rows = rows.slice().sort((a, b) => st.dir * String(a[st.sort]).localeCompare(String(b[st.sort]), 'es'));
+    document.querySelectorAll('#tev th').forEach((th) => th.setAttribute('aria-sort', th.dataset.field === st.sort ? (st.dir > 0 ? 'ascending' : 'descending') : 'none'));
+    tb.replaceChildren(...rows.map((e) => {
+      const tr = document.createElement('tr'); tr.dataset.key = e.id;
+      ['fecha', 'gremio', 'tema', 'postura', 'tipo', 'cita'].forEach((f) => { const td = document.createElement('td'); td.textContent = e[f]; tr.append(td); });
+      const td = document.createElement('td');
+      td.append(link(e.url, e.fuente));
+      if (/^https:\/\//.test(e.url_contraste || '')) { td.append(document.createElement('br'), 'Contraste: ', link(e.url_contraste, e.contraste || host(e.url_contraste))); }
+      tr.append(td); return tr;
+    }));
+  }
+
+  dash.onData(() => {
+    const de = dash.data('evidencias'), dg = dash.data('gremios'), dh = dash.data('hitos');
+    const charts = ['c-post', 'c-tipo', 'c-time', 'c-heat', 'c-reg'].map((i) => document.getElementById(i));
+    if (de.status !== 'ok' || dg.status !== 'ok') {
+      if (de.status === 'error' || dg.status === 'error') charts.forEach(fail);
+      document.getElementById('nfilt').textContent = '—';
+      return;
+    }
+    E = de.data; G = dg.data; H = dh.status === 'ok' ? dh.data : [];
+    deps = new Map(G.map((g) => [g.id, g.departamentos.split(', ')]));
+    gmap = new Map(G.map((g) => [g.id, g]));
+    fillSel('petro', 'Frente a Petro: todas', GOV);
+    fillSel('actual', 'Frente al gobierno actual: todas', GOV);
+    const ev = E.filter((e) => e.postura !== 'Sin evidencia');
+    fillSel('tipo', 'Todos los tipos', [...new Set(ev.map((e) => e.tipo_gremio))].sort());
+    fillSel('region', 'Todas las regiones', [...new Set(G.flatMap((g) => g.departamentos.split(', ')))].sort((a, b) => a.localeCompare(b, 'es')));
+    fillSel('tema', 'Todos los temas', [...new Set(ev.flatMap((e) => e.temas.split('; ')))].sort((a, b) => a.localeCompare(b, 'es')));
+    fillSel('postura', 'Todas las posturas', POST);
+    fillSel('anio', 'Todos los años', [...new Set(ev.map((e) => e.anio))].sort());
+    fillSel('decl', 'Institucional y personal', [...new Set(ev.map((e) => e.tipo))].sort());
+    applyFilters();
+    const active = PARAMS.some((p) => dash.params()[p]);
+    document.getElementById('nfilt').textContent = active ? `Con los filtros: ${fmt(filtered.length)} de ${fmt(ev.length)} evidencias.` : `Sin filtros: ${fmt(ev.length)} evidencias.`;
+    drawGremios(); drawPost(); drawTipo(); drawTime(); drawHeat(); drawReg(); drawLow(); drawFicha(); drawTable();
+  });
+})();
+</script>
+
+</div>
+<p class="foot">Investigación OSINT con fuentes públicas. Fecha de corte: 15-oct-2026. Datos abiertos: <a href="data/evidencias.json">declaraciones</a> y <a href="data/gremios.json">gremios</a> en JSON.</p>
+</body>
+</html>
